@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>$Title$</title>
+</head>
+<body>
+1、将奖品变成canvas的背景图片
+<canvas id="canvas" width="240" height="240" style="border:1px solid red;"></canvas>
+</body>
+<script src="jquery-2.1.4.js"></script>
+<script>
+    var canvas = document.getElementById("canvas");
+    var ctx = canvas.getContext("2d");
+
+    canvas.style.backgroundImage="url(烤箱.jpg)";
+
+    //2、绘制遮盖层
+    ctx.fillStyle="rgb(211,211,211)";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    //为了实现看到奖品的部分内容，需要在绘制新图形的时候让原图形中与新图形中重复的部分消失，消失的部分就会变成透明，就看到了奖品的部分内容
+    ctx.globalCompositeOperation="destination-out";
+
+
+    //实现刮的效果：就是指按下鼠标不放，同时移动鼠标
+
+    $("canvas").on("mousedown",function(){
+        //鼠标还是按着的状态，此时再次绑定鼠标移动事件
+        $("canvas").on("mousemove",function(e){
+            //根据鼠标位于canvas中的坐标绘制指定的圆
+            var circleX=e.pageX-canvas.offsetLeft;
+            var circleY=e.pageY-canvas.offsetTop;
+            ctx.beginPath();
+            ctx.arc(circleX,circleY,50,0,2*Math.PI);
+            ctx.fill();
+
+            //1、获取canvas标签中每一个像素点的信息(rgba的值)
+            var datas=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+            //2、判断每一个像素点是否已经被挂掉了
+            var points=0;//保存了所有没有被刮掉的像素点
+            for (var i = 0; i < datas.length; i+=4) {
+                //3、判断如果该像素点的rgba的值还等于原来的值，说明该点没有被刮掉
+                if(datas[i]==211 && datas[i+1]==211 && datas[i+2]==211 && datas[i+3]==255){
+                    points++;
+                }
+            }
+            //4、判断没有被刮掉的点如果小于画布的总像素点的一半，就应该直接显示商品
+            if(points<canvas.width*canvas.height/2){
+                //让商品全部显示：清空整个画布
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+
+                //解除所有的事件绑定
+                $("canvas").off("mousedown mousemove");
+            }
+
+            //第一次循环：i=0--->0/1/2/3
+            //第二次循环：i=4--->4/5/6/7
+            //第三次循环：i=8--->8/9/10/11
+
+        })
+    });
+    $("canvas").on("mouseup mouseleave",function(){
+        //鼠标还是按着的状态，此时再次绑定鼠标移动事件
+        $("canvas").off("mousemove");
+    });
+</script>
+</html>
